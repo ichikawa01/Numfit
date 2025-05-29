@@ -28,11 +28,12 @@ class HexagonClipper extends CustomClipper<Path> {
 class HexagonButton extends StatelessWidget {
   final String text;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final double size;
   final bool wrong;
   final bool correct;
   final Color? color;
+
   
 
   const HexagonButton({
@@ -55,7 +56,7 @@ class HexagonButton extends StatelessWidget {
             ? Colors.red
             : selected
                 ? Colors.blue
-                : color ?? Colors.white;
+                : color ?? const Color.fromARGB(255, 227, 236, 250);
 
     return GestureDetector(
       onTap: onTap,

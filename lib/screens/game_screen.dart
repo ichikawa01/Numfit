@@ -1,6 +1,10 @@
-import 'dart:math';
+// import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
+import 'package:numfit/utils/progress_manager.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -13,12 +17,26 @@ class GameScreenState extends State<GameScreen> {
   List<bool> isSelected = List.filled(10, false);
   List<bool> isWrong = List.filled(10, false);
   List<bool> isCorrect = List.filled(10, false);
+  List<int> selectedOrder = [];
+
+
 
   late int correctAnswer;
+  late List<String> items;
+
   String difficulty = 'EASY';
   int stage = 1;
-
   bool _initialized = false;
+
+  Future<void> _loadProblem() async {
+  final fileName = 'assets/problems/${difficulty.toLowerCase()}.json';
+  final jsonStr = await rootBundle.loadString(fileName);
+  final List<dynamic> data = json.decode(jsonStr);
+  final problem = data[stage - 1];
+
+  correctAnswer = problem['target'];
+  items = List<String>.from(problem['items']);
+}
 
   @override
   void didChangeDependencies() {
@@ -29,24 +47,11 @@ class GameScreenState extends State<GameScreen> {
       difficulty = args?['difficulty'] ?? 'EASY';
       stage = args?['stage'] ?? 1;
 
-      final random = Random();
-
-      // 難易度で出題の幅を変える（例）
-      switch (difficulty) {
-        case 'EASY':
-          correctAnswer = random.nextInt(10) + 6; // 6〜15
-          break;
-        case 'NORMAL':
-          correctAnswer = random.nextInt(12) + 10; // 10〜21
-          break;
-        case 'HARD':
-          correctAnswer = random.nextInt(10) + 18; // 18〜27
-          break;
-        default:
-          correctAnswer = random.nextInt(22) + 6;
-      }
-
-      _initialized = true;
+      _loadProblem().then((_) {
+        setState(() {
+          _initialized = true;
+        });
+      });
     }
   }
 
@@ -54,41 +59,41 @@ class GameScreenState extends State<GameScreen> {
     if (isSelected[index]) {
       setState(() {
         isSelected[index] = false;
+        selectedOrder.remove(index);
       });
       return;
     }
 
-    final selectedCount = isSelected.where((e) => e).length;
+    final selectedCount = selectedOrder.length;
     if (selectedCount >= 3) return;
 
     setState(() {
       isSelected[index] = true;
+      selectedOrder.add(index);
     });
 
-    final selectedNumbers = isSelected.asMap().entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key + 1)
-        .toList();
+    if (selectedOrder.length == 3) {
+      final selectedOps = selectedOrder.map((i) => items[i]).toList();
+      final result = _evaluateWithPrecedence(selectedOps);
 
-    if (selectedNumbers.length == 3) {
-      final total = selectedNumbers.reduce((a, b) => a + b);
+      print('式: ${selectedOps.join(' ')} = ${result ?? '不正解（小数）'}');
 
-      if (total == correctAnswer) {
+      if (result != null && result == correctAnswer.toDouble()) {
         setState(() {
           for (int i = 0; i < isSelected.length; i++) {
             isCorrect[i] = isSelected[i];
           }
         });
 
+        await ProgressManager.setClearedStage(difficulty, stage);
+
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
         Navigator.pushReplacementNamed(
           context,
           '/result',
-          arguments: {
-            'difficulty': difficulty
-          },
-          );
+          arguments: {'difficulty': difficulty},
+        );
       } else {
         setState(() {
           for (int i = 0; i < isSelected.length; i++) {
@@ -101,13 +106,70 @@ class GameScreenState extends State<GameScreen> {
         setState(() {
           isSelected = List.filled(10, false);
           isWrong = List.filled(10, false);
+          isCorrect = List.filled(10, false); // ←これを追加
+          selectedOrder.clear();
         });
       }
     }
   }
 
+  double? _evaluateWithPrecedence(List<String> ops) {
+    if (ops.isEmpty) return null;
+
+    double? result = double.tryParse(ops[0].replaceAll(RegExp(r'[^\d]'), ''));
+    if (result == null) return null;
+
+    List<String> expression = [result.toString()];
+
+    for (int i = 1; i < ops.length; i++) {
+      final match = RegExp(r'^([+\-×÷])(\d+)$').firstMatch(ops[i]);
+      if (match == null) return null;
+      final op = match.group(1)!;
+      final num = double.tryParse(match.group(2)!);
+      if (num == null || (op == '÷' && num == 0)) return null;
+      expression.add(op);
+      expression.add(num.toString());
+    }
+
+    try {
+      for (int i = 1; i < expression.length - 1; i++) {
+        if (expression[i] == '×' || expression[i] == '÷') {
+          double left = double.parse(expression[i - 1]);
+          double right = double.parse(expression[i + 1]);
+          double intermediate = expression[i] == '×' ? left * right : left / right;
+          expression.replaceRange(i - 1, i + 2, [intermediate.toString()]);
+          i -= 2;
+        }
+      }
+
+      for (int i = 1; i < expression.length - 1; i++) {
+        if (expression[i] == '+' || expression[i] == '-') {
+          double left = double.parse(expression[i - 1]);
+          double right = double.parse(expression[i + 1]);
+          double intermediate = expression[i] == '+' ? left + right : left - right;
+          expression.replaceRange(i - 1, i + 2, [intermediate.toString()]);
+          i -= 2;
+        }
+      }
+
+      double finalResult = double.parse(expression.first);
+      if (finalResult % 1 != 0) return null;
+      return finalResult;
+    } catch (e) {
+      return null;
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
+  if (!_initialized) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
+
     return Scaffold(
       appBar: AppBar(title: Text('STAGE $stage（$difficulty）')),
       body: Center(
@@ -140,7 +202,7 @@ class GameScreenState extends State<GameScreen> {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: HexagonButton(
-              text: '${i + 1}',
+              text: items[i],
               selected: isSelected[i],
               wrong: isWrong[i],
               correct: isCorrect[i],

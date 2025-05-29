@@ -1,5 +1,38 @@
 import 'package:flutter/material.dart';
 
+class BouncyButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const BouncyButton({super.key, required this.child, required this.onTap});
+
+  @override
+  State<BouncyButton> createState() => _BouncyButtonState();
+}
+
+class _BouncyButtonState extends State<BouncyButton> {
+  double _scale = 1.0;
+
+  void _onTapDown(_) => setState(() => _scale = 0.9);
+  void _onTapUp(_) => setState(() => _scale = 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: () => setState(() => _scale = 1.0),
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+
 class DifficultySelectScreen extends StatelessWidget {
   const DifficultySelectScreen({super.key});
 
