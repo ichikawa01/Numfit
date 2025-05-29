@@ -1,7 +1,6 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
-import 'dart:math';
-
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -11,21 +10,47 @@ class GameScreen extends StatefulWidget {
 }
 
 class GameScreenState extends State<GameScreen> {
-  List<bool> isSelected = List.filled(10, false); // ← 長さ10に拡張
+  List<bool> isSelected = List.filled(10, false);
   List<bool> isWrong = List.filled(10, false);
   List<bool> isCorrect = List.filled(10, false);
 
   late int correctAnswer;
+  String difficulty = 'EASY';
+  int stage = 1;
+
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    final random = Random();
-    correctAnswer = random.nextInt(22) + 6;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_initialized) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      difficulty = args?['difficulty'] ?? 'EASY';
+      stage = args?['stage'] ?? 1;
+
+      final random = Random();
+
+      // 難易度で出題の幅を変える（例）
+      switch (difficulty) {
+        case 'EASY':
+          correctAnswer = random.nextInt(10) + 6; // 6〜15
+          break;
+        case 'NORMAL':
+          correctAnswer = random.nextInt(12) + 10; // 10〜21
+          break;
+        case 'HARD':
+          correctAnswer = random.nextInt(10) + 18; // 18〜27
+          break;
+        default:
+          correctAnswer = random.nextInt(22) + 6;
+      }
+
+      _initialized = true;
+    }
   }
 
   void _handleButtonPress(int index) async {
-    // タップ済みならトグル解除（減らすのはOK）
     if (isSelected[index]) {
       setState(() {
         isSelected[index] = false;
@@ -33,44 +58,44 @@ class GameScreenState extends State<GameScreen> {
       return;
     }
 
-    // 現在の選択数をカウント
     final selectedCount = isSelected.where((e) => e).length;
-
-    // すでに3つ選ばれていたら何もせず
     if (selectedCount >= 3) return;
 
-    // まだ押せる → 選択する
     setState(() {
       isSelected[index] = true;
     });
 
-    // 選択が3つになったら答えをチェック
     final selectedNumbers = isSelected.asMap().entries
         .where((entry) => entry.value)
-        .map((entry) => entry.key + 1) // 1-basedの数字
+        .map((entry) => entry.key + 1)
         .toList();
 
     if (selectedNumbers.length == 3) {
       final total = selectedNumbers.reduce((a, b) => a + b);
 
       if (total == correctAnswer) {
-        // 緑に変える
         setState(() {
           for (int i = 0; i < isSelected.length; i++) {
-            isCorrect[i] = isSelected[i]; // 選ばれてるボタンだけ緑に
+            isCorrect[i] = isSelected[i];
           }
         });
+
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/result');
+        Navigator.pushReplacementNamed(
+          context,
+          '/result',
+          arguments: {
+            'difficulty': difficulty
+          },
+          );
       } else {
-        // 間違っていたら赤くする
         setState(() {
           for (int i = 0; i < isSelected.length; i++) {
-            isWrong[i] = isSelected[i]; // 選ばれてるものを赤に
+            isWrong[i] = isSelected[i];
           }
         });
-        // 間違っていたらリセット
+
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
         setState(() {
@@ -81,20 +106,18 @@ class GameScreenState extends State<GameScreen> {
     }
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ゲーム')),
+      appBar: AppBar(title: Text('STAGE $stage（$difficulty）')),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '$correctAnswer',
-              style: const TextStyle(fontSize: 18),
+              'TARGET\n$correctAnswer',
+              style: const TextStyle(fontSize: 24),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             _buildRow([0]),

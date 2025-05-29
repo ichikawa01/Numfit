@@ -32,6 +32,7 @@ class HexagonButton extends StatelessWidget {
   final double size;
   final bool wrong;
   final bool correct;
+  final Color? color;
   
 
   const HexagonButton({
@@ -42,6 +43,7 @@ class HexagonButton extends StatelessWidget {
     required this.correct,
     required this.onTap,
     this.size = 70,
+    this.color,
   });
 
   @override
@@ -53,7 +55,7 @@ class HexagonButton extends StatelessWidget {
             ? Colors.red
             : selected
                 ? Colors.blue
-                : Colors.white;
+                : color ?? Colors.white;
 
     return GestureDetector(
       onTap: onTap,
