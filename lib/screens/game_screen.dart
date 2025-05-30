@@ -171,22 +171,53 @@ class GameScreenState extends State<GameScreen> {
   }
 
     return Scaffold(
-      appBar: AppBar(title: Text('STAGE $stage（$difficulty）')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'TARGET\n$correctAnswer',
-              style: const TextStyle(fontSize: 24),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            _buildRow([0]),
-            _buildRow([1, 2]),
-            _buildRow([3, 4, 5]),
-            _buildRow([6, 7, 8, 9]),
-          ],
+      appBar: AppBar(
+        title: Text('STAGE $stage（$difficulty）'),
+        backgroundColor: Colors.transparent.withValues(alpha: .2),
+        elevation: 0
+        ),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0x665EFCE8),
+              Color(0x66736EFE),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .8),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'Answer\n$correctAnswer',
+                  style: const TextStyle(fontSize: 32),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 48),
+              _buildRow([0]),
+              _buildRow([1, 2]),
+              _buildRow([3, 4, 5]),
+              _buildRow([6, 7, 8, 9]),
+            ],
+          ),
         ),
       ),
     );

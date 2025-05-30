@@ -51,38 +51,57 @@ class StageSelectScreen extends StatelessWidget {
         final stages = List.generate(problems.length, (i) => i + 1);
 
         return Scaffold(
-          appBar: AppBar(title: Text('難易度: $difficulty')),
-          body: Padding(
-            padding: const EdgeInsets.all(12),
-            child: GridView.count(
-              crossAxisCount: 5,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1,
-              children: stages.map((stage) {
-                final isUnlocked = stage <= clearedStage + 1;
+          appBar: AppBar(
+            title: Text('難易度: $difficulty'),
+            backgroundColor: Colors.transparent.withValues(alpha: .2),
+            elevation: 0,
+          ),
+          extendBodyBehindAppBar: true,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0x665EFCE8),
+                  Color(0x66736EFE),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: kToolbarHeight + 12, left: 12, right: 12, bottom: 12),
+              child: GridView.count(
+                crossAxisCount: 5,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 1,
+                children: stages.map((stage) {
+                  final isUnlocked = stage <= clearedStage + 1;
 
-                return HexagonButton(
-                  text: '$stage',
-                  selected: false,
-                  wrong: false,
-                  correct: false,
-                  color: isUnlocked ? getDifficultyColor(difficulty): getDifficultyColor(difficulty).withValues(alpha: 0.1),
-                  onTap: isUnlocked
-                      ? () {
-                          Navigator.pushNamed(
-                            context,
-                            '/game',
-                            arguments: {
-                              'stage': stage,
-                              'difficulty': difficulty,
-                            },
-                          );
-                        }
-                      : null,
-                  size: 60,
-                );
-              }).toList(),
+                  return HexagonButton(
+                    text: '$stage',
+                    selected: false,
+                    wrong: false,
+                    correct: false,
+                    color: isUnlocked
+                        ? getDifficultyColor(difficulty)
+                        : getDifficultyColor(difficulty).withAlpha(40),
+                    onTap: isUnlocked
+                        ? () {
+                            Navigator.pushNamed(
+                              context,
+                              '/game',
+                              arguments: {
+                                'stage': stage,
+                                'difficulty': difficulty,
+                              },
+                            );
+                          }
+                        : null,
+                    size: 65,
+                  );
+                }).toList(),
+              ),
             ),
           ),
         );

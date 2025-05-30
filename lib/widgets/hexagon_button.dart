@@ -56,7 +56,7 @@ class HexagonButton extends StatelessWidget {
             ? Colors.red
             : selected
                 ? Colors.blue
-                : color ?? const Color.fromARGB(255, 227, 236, 250);
+                : color ?? const Color.fromARGB(255, 233, 241, 252);
 
     return GestureDetector(
       onTap: onTap,

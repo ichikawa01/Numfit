@@ -11,54 +11,70 @@ class ResultScreen extends StatelessWidget {
     final difficulty = args?['difficulty'] ?? 'EASY';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('RESULT')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+      appBar: AppBar(
+        title: const Text('RESULT'),
+        backgroundColor: Colors.transparent.withValues(alpha: .2),
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0x665EFCE8),
+              Color(0x66736EFE),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: kToolbarHeight + 24),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildStyledButton(
+                      context: context,
+                      label: 'STAGE',
+                      onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StageSelectScreen(),
+                            settings: RouteSettings(arguments: {'difficulty': difficulty}),
+                          ),
+                          ModalRoute.withName('/difficulty-select'),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 24),
+                    _buildStyledButton(
+                      context: context,
+                      label: 'MODE',
+                      onPressed: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DifficultySelectScreen()),
+                          ModalRoute.withName('/'),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 _buildStyledButton(
                   context: context,
-                  label: 'STAGE',
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const StageSelectScreen(),
-                        settings: RouteSettings(arguments: {'difficulty': difficulty}),
-                      ),
-                      ModalRoute.withName('/difficulty-select'),
-                    );
-                  },
+                  label: 'HOME',
+                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    context, '/', (route) => false),
                 ),
-
-                const SizedBox(width: 24),
-
-                _buildStyledButton(
-                  context: context,
-                  label: 'MODE',
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DifficultySelectScreen()),
-                      ModalRoute.withName('/'),
-                    );
-                  },
-                ),
-              ]
+              ],
             ),
-
-            const SizedBox(height: 24),
-
-            _buildStyledButton(
-              context: context,
-              label: 'HOME',
-              onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                context, '/', (route) => false),
-            ),
-          ],
+          ),
         ),
       ),
     );

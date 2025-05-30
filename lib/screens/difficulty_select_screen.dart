@@ -55,40 +55,57 @@ class DifficultySelectScreen extends StatelessWidget {
     final difficulties = ['EASY', 'NORMAL', 'HARD'];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('MODE')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: difficulties.map((difficulty) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/stage-select',
-                    arguments: {'difficulty': difficulty},
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: getDifficultyColor(difficulty),
-                  foregroundColor: Colors.white,
-                  shape: BeveledRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+      appBar: AppBar(
+        title: const Text('MODE'),
+        backgroundColor: Colors.transparent.withValues(alpha: .2),
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0x665EFCE8),
+              Color(0x66736EFE),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: difficulties.map((difficulty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/stage-select',
+                      arguments: {'difficulty': difficulty},
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: getDifficultyColor(difficulty),
+                    foregroundColor: Colors.white,
+                    shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 32,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 32,
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  child: Text(difficulty),
                 ),
-                child: Text(difficulty),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
