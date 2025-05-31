@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/audio_manager.dart';
 
 
 class HomeScreen extends StatelessWidget {
@@ -11,7 +12,16 @@ class HomeScreen extends StatelessWidget {
         title: const Text('HOME'),
         backgroundColor: Colors.transparent.withValues(alpha: .2),
         elevation: 0,
-        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu), // ← 歯車アイコン
+            onPressed: () async{
+              await AudioManager.playSe('audio/tap.mp3');
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
+      ),
       extendBodyBehindAppBar: true,
       body: Container(
         decoration: const BoxDecoration(
@@ -26,8 +36,10 @@ class HomeScreen extends StatelessWidget {
         ),
         child: Center(
           child: ElevatedButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, '/difficulty-select'),
+            onPressed: () async {
+              await AudioManager.playSe('audio/tap.mp3');
+              Navigator.pushNamed(context, '/difficulty-select');
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,

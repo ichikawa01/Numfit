@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
 import 'package:numfit/utils/progress_manager.dart';
 import 'dart:convert';
@@ -55,6 +56,22 @@ class StageSelectScreen extends StatelessWidget {
             title: Text('難易度: $difficulty'),
             backgroundColor: Colors.transparent.withValues(alpha: .2),
             elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () async {
+                await AudioManager.playSe('audio/tap.mp3');
+                Navigator.pop(context);
+              },
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () async{
+                  await AudioManager.playSe('audio/tap.mp3');
+                  Navigator.pushNamed(context, '/settings');
+                },
+              ),
+            ],
           ),
           extendBodyBehindAppBar: true,
           body: Container(
@@ -87,7 +104,8 @@ class StageSelectScreen extends StatelessWidget {
                         ? getDifficultyColor(difficulty)
                         : getDifficultyColor(difficulty).withAlpha(40),
                     onTap: isUnlocked
-                        ? () {
+                        ? () async {
+                            await AudioManager.playSe('audio/start.mp3');
                             Navigator.pushNamed(
                               context,
                               '/game',

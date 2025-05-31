@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/audio_manager.dart';
 import 'difficulty_select_screen.dart';
 import 'stage_select_screen.dart';
 
@@ -15,6 +16,22 @@ class ResultScreen extends StatelessWidget {
         title: const Text('RESULT'),
         backgroundColor: Colors.transparent.withValues(alpha: .2),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await AudioManager.playSe('audio/tap.mp3');
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () async{
+              await AudioManager.playSe('audio/tap.mp3');
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Container(
@@ -40,7 +57,8 @@ class ResultScreen extends StatelessWidget {
                     _buildStyledButton(
                       context: context,
                       label: 'STAGE',
-                      onPressed: () {
+                      onPressed: () async {
+                        await AudioManager.playSe('audio/tap.mp3');
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
@@ -55,7 +73,8 @@ class ResultScreen extends StatelessWidget {
                     _buildStyledButton(
                       context: context,
                       label: 'MODE',
-                      onPressed: () {
+                      onPressed: () async{
+                        await AudioManager.playSe('audio/tap.mp3');
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(builder: (_) => const DifficultySelectScreen()),
@@ -69,8 +88,10 @@ class ResultScreen extends StatelessWidget {
                 _buildStyledButton(
                   context: context,
                   label: 'HOME',
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context, '/', (route) => false),
+                  onPressed: () async {
+                    await AudioManager.playSe('audio/tap.mp3');
+                    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                  },
                 ),
               ],
             ),

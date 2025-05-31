@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/audio_manager.dart';
+
 
 class BouncyButton extends StatefulWidget {
   final Widget child;
@@ -59,6 +61,22 @@ class DifficultySelectScreen extends StatelessWidget {
         title: const Text('MODE'),
         backgroundColor: Colors.transparent.withValues(alpha: .2),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await AudioManager.playSe('audio/tap.mp3');
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () async {
+              await AudioManager.playSe('audio/tap.mp3');
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Container(
@@ -79,7 +97,8 @@ class DifficultySelectScreen extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async{
+                    await AudioManager.playSe('audio/tap.mp3');
                     Navigator.pushNamed(
                       context,
                       '/stage-select',

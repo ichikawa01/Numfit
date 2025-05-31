@@ -4,9 +4,15 @@ import 'screens/game_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/difficulty_select_screen.dart';
 import 'screens/stage_select_screen.dart';
+import 'utils/audio_manager.dart';
+import 'screens/settings_screen.dart';
 
-void main() {
-  runApp(MyApp());
+
+void main() async{
+   WidgetsFlutterBinding.ensureInitialized();
+  await AudioManager.init();
+  runApp(const MyApp());
+
 }
 
 class MyApp extends StatelessWidget {
@@ -25,6 +31,7 @@ class MyApp extends StatelessWidget {
       '/stage-select': (context) => const StageSelectScreen(),
       '/game': (context) => const GameScreen(),
       '/result': (context) => const ResultScreen(),
+      '/settings': (context) => const SettingsScreen(),
       },
     );
   }

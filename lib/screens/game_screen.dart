@@ -1,5 +1,6 @@
 // import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
 import 'package:numfit/utils/progress_manager.dart';
 import 'dart:convert';
@@ -56,6 +57,7 @@ class GameScreenState extends State<GameScreen> {
   }
 
   void _handleButtonPress(int index) async {
+    await AudioManager.playSe('audio/tap.mp3');
     if (isSelected[index]) {
       setState(() {
         isSelected[index] = false;
@@ -88,6 +90,7 @@ class GameScreenState extends State<GameScreen> {
         await ProgressManager.setClearedStage(difficulty, stage);
 
         await Future.delayed(const Duration(milliseconds: 500));
+        await AudioManager.playSe('audio/ok.mp3');
         if (!mounted) return;
         Navigator.pushReplacementNamed(
           context,
@@ -102,6 +105,7 @@ class GameScreenState extends State<GameScreen> {
         });
 
         await Future.delayed(const Duration(milliseconds: 500));
+        await AudioManager.playSe('audio/ng.mp3');
         if (!mounted) return;
         setState(() {
           isSelected = List.filled(10, false);
@@ -174,8 +178,24 @@ class GameScreenState extends State<GameScreen> {
       appBar: AppBar(
         title: Text('STAGE $stage（$difficulty）'),
         backgroundColor: Colors.transparent.withValues(alpha: .2),
-        elevation: 0
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await AudioManager.playSe('audio/tap.mp3');
+            Navigator.pop(context);
+          },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () async{
+              await AudioManager.playSe('audio/tap.mp3');
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
+      ),
       extendBodyBehindAppBar: true,
       body: Container(
         decoration: const BoxDecoration(
