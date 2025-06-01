@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 Map<String, List<int>> thresholds = {
-  'EASY': [1, 10, 20, 30],
-  'NORMAL': [1, 10, 20, 30],
-  'HARD': [1, 10, 20, 30],
-  'LEGEND': [1, 10, 20, 30],
+  'EASY': [1, 5, 10, 25, 40, 70, 100],
+  'NORMAL': [1, 5, 10, 25, 40, 70, 100],
+  'HARD': [1, 5, 10, 25, 40, 70, 100],
+  'LEGEND': [1, 5, 10, 25, 40, 70, 100]
 };
 
 int getPlantStage(int clearedCount, List<int> thresholds) {
@@ -25,7 +25,7 @@ Color getDifficultyColor(String difficulty) {
     case 'HARD':
       return Colors.red;
     case 'LEGEND':
-      return Colors.lime;
+      return Colors.orange;
     default:
       return Colors.grey;
   }

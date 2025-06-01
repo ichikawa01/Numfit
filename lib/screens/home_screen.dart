@@ -41,7 +41,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final String imagePath = 'assets/plants/${currentDifficulty.toLowerCase()}_$stageIndex.png';
 
     // 難易度ごとの上限値
-    final int upperBound = thresholdList[stageIndex];
+    final int upperBound = (stageIndex == 7)
+      ? 100
+      : thresholdList[stageIndex];
+
     // プログレスバーの値（0.0〜1.0）
     final double progress = (cleared / upperBound).clamp(0.0, 1.0);
     // 表示用ラベル（例: EASY  2 / 10）
@@ -159,8 +162,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     label,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: getDifficultyColor(currentDifficulty),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -202,44 +205,76 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 24),
 
-                // 各難易度のSTARTボタン（常に全表示）
-                Column(
-                  children: difficulties.map((difficulty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: ElevatedButton(
+                // 難易度＆デイリーボタンレイアウト
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 🗓 デイリーボタン（左側）
+                      ElevatedButton(
                         onPressed: () async {
                           await AudioManager.playSe('audio/tap.mp3');
                           if (!mounted) return;
-                          Navigator.pushNamed(
-                            context,
-                            '/stage-select',
-                            arguments: {'difficulty': difficulty},
-                          );
+                          Navigator.pushNamed(context, '/daily');
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: getDifficultyColor(difficulty),
+                          backgroundColor: Colors.pink,
                           foregroundColor: Colors.white,
                           shape: BeveledRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 32,
-                          ),
-                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        child: Text(difficulty),
+                        child: const Text('DAILY'),
                       ),
-                    );
-                  }).toList(),
+
+                      const SizedBox(width: 24),
+
+                      // 難易度ボタン（右側にまとめて）
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: difficulties.map((difficulty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await AudioManager.playSe('audio/tap.mp3');
+                                if (!mounted) return;
+                                Navigator.pushNamed(
+                                  context,
+                                  '/stage-select',
+                                  arguments: {'difficulty': difficulty},
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: getDifficultyColor(difficulty),
+                                foregroundColor: Colors.white,
+                                shape: BeveledRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 32,
+                                ),
+                                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              child: Text(difficulty),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
           Positioned(
-            top: kToolbarHeight + 80,
-            right: 24,
+            top: kToolbarHeight + 90,
+            right: 30,
             child: GestureDetector(
               onTap: () async {
                 await AudioManager.playSe('audio/tap.mp3');

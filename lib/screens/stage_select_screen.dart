@@ -2,27 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
 import 'package:numfit/utils/progress_manager.dart';
+import 'package:numfit/utils/difficulty_utils.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 
 
 class StageSelectScreen extends StatelessWidget {
   const StageSelectScreen({super.key});
-
-  Color getDifficultyColor(String difficulty) {
-    switch (difficulty.toUpperCase()) {
-      case 'EASY':
-        return Colors.blue;
-      case 'NORMAL':
-        return Colors.green;
-      case 'HARD':
-        return Colors.red;
-      case 'LEGEND':
-        return Colors.lime;
-      default:
-        return Colors.grey;
-    }
-  }
 
   Future<Map<String, dynamic>> _loadStageDataAndProgress(String difficulty, String filePath) async {
     final jsonStr = await rootBundle.loadString(filePath);

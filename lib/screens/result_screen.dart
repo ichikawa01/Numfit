@@ -35,100 +35,123 @@ class ResultScreen extends StatelessWidget {
         ],
       ),
       extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0x665EFCE8), Color(0x66736EFE)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: kToolbarHeight + 24),
-            child: FutureBuilder<int>(
-              future: ProgressManager.getClearedStage(difficulty),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const CircularProgressIndicator();
-                }
+      body: Stack(
+        children: [
+          // 背景グラデーションとメイン内容
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0x665EFCE8), Color(0x66736EFE)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: kToolbarHeight + 24),
+                child: FutureBuilder<int>(
+                  future: ProgressManager.getClearedStage(difficulty),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const CircularProgressIndicator();
+                    }
 
-                final cleared = snapshot.data!;
-                final thresholdList = thresholds[difficulty]!;
-                final stageIndex = getPlantStage(cleared, thresholdList);
-                final imagePath = 'assets/plants/${difficulty.toLowerCase()}_$stageIndex.png';
-                final int upperBound = thresholdList[stageIndex];
-                final double progress = (cleared / upperBound).clamp(0.0, 1.0);
-                final String label = '$difficulty  $cleared / $upperBound';
+                    final cleared = snapshot.data!;
+                    final thresholdList = thresholds[difficulty]!;
+                    final stageIndex = getPlantStage(cleared, thresholdList);
+                    final imagePath = 'assets/plants/${difficulty.toLowerCase()}_$stageIndex.png';
+                    final int upperBound = thresholdList[stageIndex];
+                    final double progress = (cleared / upperBound).clamp(0.0, 1.0);
+                    final String label = '$difficulty  $cleared / $upperBound';
 
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 160,
-                      height: 160,
-                      decoration: const BoxDecoration(shape: BoxShape.circle),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.asset(imagePath),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: 140,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 10,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Colors.lightGreenAccent,
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 260,
+                          height: 260,
+                          decoration: const BoxDecoration(shape: BoxShape.circle),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.asset(imagePath),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.blueAccent,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 64),
-                    _buildStyledButton(
-                      context: context,
-                      label: 'STAGE',
-                      onPressed: () async {
-                        await AudioManager.playSe('audio/tap.mp3');
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const StageSelectScreen(),
-                            settings: RouteSettings(arguments: {'difficulty': difficulty}),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 160,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 10,
+                              backgroundColor: Colors.white24,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.lightGreenAccent,
+                              ),
+                            ),
                           ),
-                          ModalRoute.withName('/'),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _buildStyledButton(
-                      context: context,
-                      label: 'HOME',
-                      onPressed: () async {
-                        await AudioManager.playSe('audio/tap.mp3');
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/',
-                          (route) => false,
-                        );
-                      },
-                    ),
-                  ],
-                );
-              },
+                        ),
+                        const SizedBox(height: 64),
+                        _buildStyledButton(
+                          context: context,
+                          label: 'STAGE',
+                          onPressed: () async {
+                            await AudioManager.playSe('audio/tap.mp3');
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const StageSelectScreen(),
+                                settings: RouteSettings(arguments: {'difficulty': difficulty}),
+                              ),
+                              ModalRoute.withName('/'),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        _buildStyledButton(
+                          context: context,
+                          label: 'HOME',
+                          onPressed: () async {
+                            await AudioManager.playSe('audio/tap.mp3');
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/',
+                              (route) => false,
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
+
+          // ✅ コレクションボタン（右上に配置）
+          Positioned(
+            top: kToolbarHeight + 90,
+            right: 30,
+            child: GestureDetector(
+              onTap: () async {
+                await AudioManager.playSe('audio/tap.mp3');
+                if (!context.mounted) return;
+                Navigator.pushNamed(context, '/collection');
+              },
+              child: Image.asset(
+                'assets/images/leaf.png', // ← コレクションボタンの画像
+                width: 60,
+                height: 60,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

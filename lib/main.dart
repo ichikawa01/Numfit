@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/screens/daily_game_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/home_screen.dart';
@@ -6,6 +7,8 @@ import 'screens/stage_select_screen.dart';
 import 'utils/audio_manager.dart';
 import 'screens/settings_screen.dart';
 import 'screens/collection_screen.dart';
+import 'screens/daily_screen.dart';
+
 
 
 void main() async{
@@ -32,6 +35,8 @@ class MyApp extends StatelessWidget {
       '/result': (context) => const ResultScreen(),
       '/settings': (context) => const SettingsScreen(),
       '/collection': (context) => const CollectionScreen(),
+      '/daily': (context) => const DailyScreen(),
+      '/daily-play': (context) => const DailyGameScreen(),
       },
     );
   }
