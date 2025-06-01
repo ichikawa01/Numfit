@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioManager {
   static final AudioPlayer _bgmPlayer = AudioPlayer();
-  static final AudioPlayer _sePlayer = AudioPlayer();
 
   static bool _bgmEnabled = true;
   static bool _seEnabled = true;

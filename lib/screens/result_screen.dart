@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/utils/difficulty_utils.dart';
 import 'package:numfit/utils/progress_manager.dart';
-import 'home_screen.dart';
 import 'stage_select_screen.dart';
 
 class ResultScreen extends StatelessWidget {
