@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'screens/game_screen.dart';
 import 'screens/result_screen.dart';
-import 'screens/difficulty_select_screen.dart';
+import 'screens/home_screen.dart';
 import 'screens/stage_select_screen.dart';
 import 'utils/audio_manager.dart';
 import 'screens/settings_screen.dart';
+import 'screens/collection_screen.dart';
 
 
 void main() async{
@@ -23,13 +24,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/difficulty-select',
+      initialRoute: '/',
       routes: {
-      '/difficulty-select': (context) => const DifficultySelectScreen(),
+      '/': (context) => const HomeScreen(),
       '/stage-select': (context) => const StageSelectScreen(),
       '/game': (context) => const GameScreen(),
       '/result': (context) => const ResultScreen(),
       '/settings': (context) => const SettingsScreen(),
+      '/collection': (context) => const CollectionScreen(),
       },
     );
   }

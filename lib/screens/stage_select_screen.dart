@@ -40,55 +40,55 @@ class StageSelectScreen extends StatelessWidget {
     final String difficulty = (args?['difficulty'] ?? 'EASY').toString().toUpperCase();
     final String filePath = 'assets/problems/${difficulty.toLowerCase()}.json';
 
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _loadStageDataAndProgress(difficulty, filePath),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final problems = snapshot.data!['problems'] as List;
-        final clearedStage = snapshot.data!['clearedStage'] as int;
-        final stages = List.generate(problems.length, (i) => i + 1);
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(difficulty),
-            backgroundColor: Colors.transparent.withValues(alpha: .2),
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () async {
-                await AudioManager.playSe('audio/tap.mp3');
-                Navigator.pop(context);
-              },
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () async{
-                  await AudioManager.playSe('audio/tap.mp3');
-                  Navigator.pushNamed(context, '/settings');
-                },
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(difficulty),
+        backgroundColor: getDifficultyColor(difficulty), // ← 透過避ける
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await AudioManager.playSe('audio/tap.mp3');
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () async {
+              await AudioManager.playSe('audio/tap.mp3');
+              Navigator.pushNamed(context, '/settings');
+            },
           ),
-          extendBodyBehindAppBar: true,
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0x665EFCE8),
-                  Color(0x66736EFE),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+        ],
+      ),
+      extendBodyBehindAppBar: false, // 透過を防止
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0x665EFCE8), Color(0x66736EFE)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _loadStageDataAndProgress(difficulty, filePath),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final problems = snapshot.data!['problems'] as List;
+            final clearedStage = snapshot.data!['clearedStage'] as int;
+            final stages = List.generate(problems.length, (i) => i + 1);
+
+            return Padding(
+              padding: const EdgeInsets.only(
+                top: 12,
+                left: 12,
+                right: 12,
+                bottom: 12,
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: kToolbarHeight + 12, left: 12, right: 12, bottom: 12),
               child: GridView.count(
                 crossAxisCount: 5,
                 mainAxisSpacing: 8,
@@ -122,10 +122,11 @@ class StageSelectScreen extends StatelessWidget {
                   );
                 }).toList(),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
+
 }

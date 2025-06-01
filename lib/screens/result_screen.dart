@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:numfit/utils/audio_manager.dart';
-import 'difficulty_select_screen.dart';
+import 'package:numfit/utils/difficulty_utils.dart';
+import 'package:numfit/utils/progress_manager.dart';
+import 'home_screen.dart';
 import 'stage_select_screen.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -9,12 +11,12 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final difficulty = args?['difficulty'] ?? 'EASY';
+    final String difficulty = args?['difficulty'] ?? 'EASY';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('RESULT'),
-        backgroundColor: Colors.transparent.withValues(alpha: .2),
+        backgroundColor: Colors.transparent.withAlpha(50),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -26,7 +28,7 @@ class ResultScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.menu),
-            onPressed: () async{
+            onPressed: () async {
               await AudioManager.playSe('audio/tap.mp3');
               Navigator.pushNamed(context, '/settings');
             },
@@ -37,10 +39,7 @@ class ResultScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0x665EFCE8),
-              Color(0x66736EFE),
-            ],
+            colors: [Color(0x665EFCE8), Color(0x66736EFE)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -48,39 +47,86 @@ class ResultScreen extends StatelessWidget {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.only(top: kToolbarHeight + 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildStyledButton(
-                  context: context,
-                  label: 'STAGE',
-                  onPressed: () async {
-                    await AudioManager.playSe('audio/tap.mp3');
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const StageSelectScreen(),
-                        settings: RouteSettings(arguments: {'difficulty': difficulty}),
+            child: FutureBuilder<int>(
+              future: ProgressManager.getClearedStage(difficulty),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const CircularProgressIndicator();
+                }
+
+                final cleared = snapshot.data!;
+                final thresholdList = thresholds[difficulty]!;
+                final stageIndex = getPlantStage(cleared, thresholdList);
+                final imagePath = 'assets/plants/${difficulty.toLowerCase()}_$stageIndex.png';
+                final int upperBound = thresholdList[stageIndex];
+                final double progress = (cleared / upperBound).clamp(0.0, 1.0);
+                final String label = '$difficulty  $cleared / $upperBound';
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 160,
+                      height: 160,
+                      decoration: const BoxDecoration(shape: BoxShape.circle),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(imagePath),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
-                      ModalRoute.withName('/difficulty-select'),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                const SizedBox(width: 24),
-                _buildStyledButton(
-                  context: context,
-                  label: 'HOME',
-                  onPressed: () async{
-                    await AudioManager.playSe('audio/tap.mp3');
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DifficultySelectScreen()),
-                      ModalRoute.withName('/'),
-                    );
-                  },
-                ),
-              ],
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 140,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 10,
+                          backgroundColor: Colors.white24,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.lightGreenAccent,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 64),
+                    _buildStyledButton(
+                      context: context,
+                      label: 'STAGE',
+                      onPressed: () async {
+                        await AudioManager.playSe('audio/tap.mp3');
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StageSelectScreen(),
+                            settings: RouteSettings(arguments: {'difficulty': difficulty}),
+                          ),
+                          ModalRoute.withName('/'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildStyledButton(
+                      context: context,
+                      label: 'HOME',
+                      onPressed: () async {
+                        await AudioManager.playSe('audio/tap.mp3');
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/',
+                          (route) => false,
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
