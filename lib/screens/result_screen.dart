@@ -51,46 +51,33 @@ class ResultScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildStyledButton(
-                      context: context,
-                      label: 'STAGE',
-                      onPressed: () async {
-                        await AudioManager.playSe('audio/tap.mp3');
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const StageSelectScreen(),
-                            settings: RouteSettings(arguments: {'difficulty': difficulty}),
-                          ),
-                          ModalRoute.withName('/difficulty-select'),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 24),
-                    _buildStyledButton(
-                      context: context,
-                      label: 'MODE',
-                      onPressed: () async{
-                        await AudioManager.playSe('audio/tap.mp3');
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const DifficultySelectScreen()),
-                          ModalRoute.withName('/'),
-                        );
-                      },
-                    ),
-                  ],
+                _buildStyledButton(
+                  context: context,
+                  label: 'STAGE',
+                  onPressed: () async {
+                    await AudioManager.playSe('audio/tap.mp3');
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const StageSelectScreen(),
+                        settings: RouteSettings(arguments: {'difficulty': difficulty}),
+                      ),
+                      ModalRoute.withName('/difficulty-select'),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
+                const SizedBox(width: 24),
                 _buildStyledButton(
                   context: context,
                   label: 'HOME',
-                  onPressed: () async {
+                  onPressed: () async{
                     await AudioManager.playSe('audio/tap.mp3');
-                    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DifficultySelectScreen()),
+                      ModalRoute.withName('/'),
+                    );
                   },
                 ),
               ],

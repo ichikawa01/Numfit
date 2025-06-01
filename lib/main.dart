@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/difficulty_select_screen.dart';
@@ -24,9 +23,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/',
+      initialRoute: '/difficulty-select',
       routes: {
-      '/': (context) => const HomeScreen(),
       '/difficulty-select': (context) => const DifficultySelectScreen(),
       '/stage-select': (context) => const StageSelectScreen(),
       '/game': (context) => const GameScreen(),

@@ -14,7 +14,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('設定'),
+        title: const Text('SETTINGS'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('SE（効果音）'),
+                  title: const Text('SE'),
                   value: AudioManager.isSeEnabled,
                   onChanged: (_) async {
                     await AudioManager.toggleSe();

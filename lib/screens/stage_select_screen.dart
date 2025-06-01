@@ -12,11 +12,13 @@ class StageSelectScreen extends StatelessWidget {
   Color getDifficultyColor(String difficulty) {
     switch (difficulty.toUpperCase()) {
       case 'EASY':
-        return Colors.lime;
+        return Colors.blue;
       case 'NORMAL':
         return Colors.green;
       case 'HARD':
         return Colors.red;
+      case 'LEGEND':
+        return Colors.lime;
       default:
         return Colors.grey;
     }
@@ -53,7 +55,7 @@ class StageSelectScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('難易度: $difficulty'),
+            title: Text(difficulty),
             backgroundColor: Colors.transparent.withValues(alpha: .2),
             elevation: 0,
             leading: IconButton(

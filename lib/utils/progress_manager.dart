@@ -5,7 +5,7 @@ class ProgressManager {
 
   static Future<int> getClearedStage(String difficulty) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('$_keyPrefix$difficulty') ?? 1; // 最初はステージ1だけ
+    return prefs.getInt('$_keyPrefix$difficulty') ?? 0; // 最初はステージ1だけ
   }
 
   static Future<void> setClearedStage(String difficulty, int stage) async {
