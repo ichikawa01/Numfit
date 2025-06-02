@@ -75,15 +75,14 @@ class _DailyScreenState extends State<DailyScreen> {
 
   void _updateFlowerImage() {
     final clearedCount = _clearedDates.length;
-    print('🌱 Cleared count: $clearedCount');
     final lastDay = _lastDay.day;
     final int stage;
 
     if (clearedCount >= lastDay) {
       stage = 3;
-    } else if (clearedCount >= 20) {
+    } else if (clearedCount >= 2) {
       stage = 2;
-    } else if (clearedCount >= 10) {
+    } else if (clearedCount >= 1) {
       stage = 1;
     } else {
       stage = 0;
@@ -91,10 +90,9 @@ class _DailyScreenState extends State<DailyScreen> {
 
     setState(() {
       _flowerImage = stage == 0
-          ? 'assets/images/leaf.png'
+          ? 'assets/images/stage0.png'
           : 'assets/plants/${_yyyymm}_$stage.png';
     });
-    print('🌸 Flower image path: $_flowerImage');
   }
 
   void _onStartDaily() async {
@@ -139,8 +137,6 @@ class _DailyScreenState extends State<DailyScreen> {
       if (!mounted) return;
       _updateFlowerImage();
 
-      print('Selected date: ${DateFormat('yyyy-MM-dd').format(playDate)}');
-      print(clearedDates);
     });
   }
 
@@ -211,7 +207,6 @@ class _DailyScreenState extends State<DailyScreen> {
               });
               _determineSelectedDay(); // ← 再選択
               _updateFlowerImage();    // ← 花の状態も更新
-              print('✅ デイリークリア情報を初期化しました');
             },
           ),
 
@@ -251,8 +246,8 @@ class _DailyScreenState extends State<DailyScreen> {
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
-                  width: 140,
-                  height: 140,
+                  width: 200,
+                  height: 200,
                   child: _flowerImage != null
                       ? Image.asset(_flowerImage!, fit: BoxFit.contain)
                       : const SizedBox.shrink(),
