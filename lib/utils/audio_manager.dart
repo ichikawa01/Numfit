@@ -57,4 +57,19 @@ class AudioManager {
     await _bgmPlayer.stop();
     _isBgmPlaying = false;
   }
+
+  static Future<void> forceRestartBgm() async {
+    if (!_bgmEnabled) return;
+
+    _isBgmPlaying = false; // ← これが重要
+    await _bgmPlayer.stop(); // 安全のために停止
+    await _startBgm();       // 再スタート
+  }
+
+  static Future<void> stopBgm() async {
+    if (!_bgmEnabled) return;
+
+    await _bgmPlayer.stop();
+  }
+
 }

@@ -12,6 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
   final List<String> difficulties = ['EASY', 'NORMAL', 'HARD', 'LEGEND'];
   final Map<String, int> clearedStages = {};
   
@@ -30,6 +31,11 @@ class _HomeScreenState extends State<HomeScreen> {
       clearedStages[difficulty] = count;
     }
     if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -84,9 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 30),
                 // 難易度ラベルと植物画像（左右に三角ボタン）
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -203,16 +210,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // 難易度＆デイリーボタンレイアウト
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 🗓 デイリーボタン（左側）
+                      // デイリーボタン（上）
                       ElevatedButton(
                         onPressed: () async {
                           await AudioManager.playSe('audio/tap.mp3');
@@ -225,49 +231,52 @@ class _HomeScreenState extends State<HomeScreen> {
                           shape: BeveledRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 40),
+                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         child: const Text('DAILY'),
                       ),
 
-                      const SizedBox(width: 24),
+                      const SizedBox(height: 42),
 
-                      // 難易度ボタン（右側にまとめて）
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: difficulties.map((difficulty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                await AudioManager.playSe('audio/tap.mp3');
-                                if (!mounted) return;
-                                Navigator.pushNamed(
-                                  context,
-                                  '/stage-select',
-                                  arguments: {'difficulty': difficulty},
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: getDifficultyColor(difficulty),
-                                foregroundColor: Colors.white,
-                                shape: BeveledRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                      // 難易度ボタン（2×2配置）
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 24,
+                          runSpacing: 24,
+                          children: difficulties.map((difficulty) {
+                            return SizedBox(
+                              width: 140,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  await AudioManager.playSe('audio/tap.mp3');
+                                  if (!mounted) return;
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/stage-select',
+                                    arguments: {'difficulty': difficulty},
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: getDifficultyColor(difficulty),
+                                  foregroundColor: Colors.white,
+                                  shape: BeveledRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                  horizontal: 32,
-                                ),
-                                textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                child: Text(difficulty),
                               ),
-                              child: Text(difficulty),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ],
                   ),
+
                 ),
               ],
             ),
@@ -288,7 +297,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
         ],
       ),
     );

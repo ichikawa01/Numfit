@@ -8,12 +8,13 @@ import 'utils/audio_manager.dart';
 import 'screens/settings_screen.dart';
 import 'screens/collection_screen.dart';
 import 'screens/daily_screen.dart';
-
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 
 void main() async{
    WidgetsFlutterBinding.ensureInitialized();
   await AudioManager.init();
+  MobileAds.instance.initialize();
   runApp(const MyApp());
 
 }

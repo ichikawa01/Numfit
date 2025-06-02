@@ -53,7 +53,7 @@ class _CollectionScreenState extends State<CollectionScreen> {
 
   int getDailyStage(int clearedCount, int lastDay) {
     if (clearedCount >= lastDay) return 3;
-    if (clearedCount >= 2) return 2;
+    if (clearedCount >= 10) return 2;
     if (clearedCount >= 1) return 1;
     return 0;
   }

@@ -1,11 +1,11 @@
-// import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
 import 'package:numfit/utils/progress_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ← カウント保存用
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -20,8 +20,6 @@ class GameScreenState extends State<GameScreen> {
   List<bool> isCorrect = List.filled(10, false);
   List<int> selectedOrder = [];
 
-
-
   late int correctAnswer;
   late List<String> items;
 
@@ -29,15 +27,71 @@ class GameScreenState extends State<GameScreen> {
   int stage = 1;
   bool _initialized = false;
 
-  Future<void> _loadProblem() async {
-  final fileName = 'assets/problems/${difficulty.toLowerCase()}.json';
-  final jsonStr = await rootBundle.loadString(fileName);
-  final List<dynamic> data = json.decode(jsonStr);
-  final problem = data[stage - 1];
 
-  correctAnswer = problem['target'];
-  items = List<String>.from(problem['items']);
-}
+  // 広告関連
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  InterstitialAd? _interstitialAd;
+  bool _isInterstitialAdReady = false;
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/4411468910', // テスト用 ID（本番では置換）
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+          _isInterstitialAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('Interstitial ad failed to load: $error');
+          _isInterstitialAdReady = false;
+        },
+      ),
+    );
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト用ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          setState(() {
+            _isBannerLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          _isBannerLoaded = false;
+          print('Ad failed to load: $error');
+        },
+      ),
+    )..load();
+
+    _loadInterstitialAd();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadProblem() async {
+    final fileName = 'assets/problems/${difficulty.toLowerCase()}.json';
+    final jsonStr = await rootBundle.loadString(fileName);
+    final List<dynamic> data = json.decode(jsonStr);
+    final problem = data[stage - 1];
+
+    correctAnswer = problem['target'];
+    items = List<String>.from(problem['items']);
+  }
 
   @override
   void didChangeDependencies() {
@@ -66,8 +120,7 @@ class GameScreenState extends State<GameScreen> {
       return;
     }
 
-    final selectedCount = selectedOrder.length;
-    if (selectedCount >= 3) return;
+    if (selectedOrder.length >= 3) return;
 
     setState(() {
       isSelected[index] = true;
@@ -78,8 +131,6 @@ class GameScreenState extends State<GameScreen> {
       final selectedOps = selectedOrder.map((i) => items[i]).toList();
       final result = _evaluateWithPrecedence(selectedOps);
 
-      print('式: ${selectedOps.join(' ')} = ${result ?? '不正解（小数）'}');
-
       if (result != null && result == correctAnswer.toDouble()) {
         setState(() {
           for (int i = 0; i < isSelected.length; i++) {
@@ -88,10 +139,30 @@ class GameScreenState extends State<GameScreen> {
         });
 
         await ProgressManager.setClearedStage(difficulty, stage);
-
         await Future.delayed(const Duration(milliseconds: 500));
         await AudioManager.playSe('audio/ok.mp3');
         if (!mounted) return;
+
+        // インタースティシャルカウント処理
+        final prefs = await SharedPreferences.getInstance();
+        int count = prefs.getInt('clear_count') ?? 0;
+        count += 1;
+        await prefs.setInt('clear_count', count);
+
+        if (count >= 9 && count % 3 == 0 && _isInterstitialAdReady) {
+          _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _loadInterstitialAd(); // 次の読み込み
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              ad.dispose();
+              _loadInterstitialAd(); // 次の読み込み
+            },
+          );
+          _interstitialAd?.show();
+        }
+
         Navigator.pushReplacementNamed(
           context,
           '/result',
@@ -110,7 +181,7 @@ class GameScreenState extends State<GameScreen> {
         setState(() {
           isSelected = List.filled(10, false);
           isWrong = List.filled(10, false);
-          isCorrect = List.filled(10, false); // ←これを追加
+          isCorrect = List.filled(10, false);
           selectedOrder.clear();
         });
       }
@@ -164,20 +235,18 @@ class GameScreenState extends State<GameScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-  if (!_initialized) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
-  }
+    if (!_initialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: Text('STAGE $stage（$difficulty）'),
-        backgroundColor: Colors.transparent.withValues(alpha: .2),
+        backgroundColor: Colors.transparent.withAlpha(50),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -189,7 +258,7 @@ class GameScreenState extends State<GameScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.menu),
-            onPressed: () async{
+            onPressed: () async {
               await AudioManager.playSe('audio/tap.mp3');
               Navigator.pushNamed(context, '/settings');
             },
@@ -197,48 +266,61 @@ class GameScreenState extends State<GameScreen> {
         ],
       ),
       extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0x665EFCE8),
-              Color(0x66736EFE),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .8),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Answer\n$correctAnswer',
-                  style: const TextStyle(fontSize: 32),
-                  textAlign: TextAlign.center,
-                ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0x665EFCE8), Color(0x66736EFE)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              const SizedBox(height: 48),
-              _buildRow([0]),
-              _buildRow([1, 2]),
-              _buildRow([3, 4, 5]),
-              _buildRow([6, 7, 8, 9]),
-            ],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'Answer\n$correctAnswer',
+                      style: const TextStyle(fontSize: 32),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _buildRow([0]),
+                  _buildRow([1, 2]),
+                  _buildRow([3, 4, 5]),
+                  _buildRow([6, 7, 8, 9]),
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isBannerLoaded && _bannerAd != null)
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Colors.white,
+                height: _bannerAd!.size.height.toDouble(),
+                alignment: Alignment.center,
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            ),
+        ],
       ),
     );
   }

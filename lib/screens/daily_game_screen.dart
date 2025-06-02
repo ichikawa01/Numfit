@@ -4,7 +4,7 @@ import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:intl/intl.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class DailyGameScreen extends StatefulWidget {
   const DailyGameScreen({super.key});
@@ -23,6 +23,37 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
   late List<String> items;
   bool _initialized = false;
   late String playDateStr;
+
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト広告ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          setState(() {
+            _isBannerLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          print('Ad failed: $error');
+        },
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -77,7 +108,6 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
           }
         });
 
-        // スタンプ保存
         final prefs = await SharedPreferences.getInstance();
         final existing = prefs.getStringList('cleared_daily_days') ?? [];
         if (!existing.contains(playDateStr)) {
@@ -174,38 +204,54 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
         ),
       ),
       extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0x665EFCE8), Color(0x66736EFE)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(200),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Answer\n$correctAnswer',
-                  style: const TextStyle(fontSize: 32),
-                  textAlign: TextAlign.center,
-                ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0x665EFCE8), Color(0x66736EFE)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              const SizedBox(height: 48),
-              _buildRow([0]),
-              _buildRow([1, 2]),
-              _buildRow([3, 4, 5]),
-              _buildRow([6, 7, 8, 9]),
-            ],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(200),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Answer\n$correctAnswer',
+                      style: const TextStyle(fontSize: 32),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _buildRow([0]),
+                  _buildRow([1, 2]),
+                  _buildRow([3, 4, 5]),
+                  _buildRow([6, 7, 8, 9]),
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isBannerLoaded && _bannerAd != null)
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Container(
+                color: Colors.white,
+                height: _bannerAd!.size.height.toDouble(),
+                alignment: Alignment.center,
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            ),
+        ],
       ),
     );
   }

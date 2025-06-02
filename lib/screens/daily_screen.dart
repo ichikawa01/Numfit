@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:convert';
+import 'package:numfit/utils/audio_manager.dart';
 
 class DailyScreen extends StatefulWidget {
   const DailyScreen({super.key});
@@ -20,6 +22,9 @@ class _DailyScreenState extends State<DailyScreen> {
   String? _flowerImage;
   DateTime? _selectedDay;
 
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +37,24 @@ class _DailyScreenState extends State<DailyScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeDailyState();
     });
+
+    _loadRewardedAd();
+  }
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/5224354917',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
   }
 
   Future<void> _initializeDailyState() async {
@@ -51,14 +74,12 @@ class _DailyScreenState extends State<DailyScreen> {
       return date != null && date.year == now.year && date.month == now.month;
     }).toSet() ?? {};
 
-    // 今月分だけ再保存（クリーニング）
     await prefs.setStringList('cleared_daily_days', currentMonthDates.toList());
 
     setState(() {
       _clearedDates = currentMonthDates;
     });
   }
-
 
   void _determineSelectedDay() {
     final now = DateTime.now();
@@ -70,7 +91,7 @@ class _DailyScreenState extends State<DailyScreen> {
         return;
       }
     }
-    _selectedDay = null; // 全てクリア済み
+    _selectedDay = null;
   }
 
   void _updateFlowerImage() {
@@ -80,7 +101,7 @@ class _DailyScreenState extends State<DailyScreen> {
 
     if (clearedCount >= lastDay) {
       stage = 3;
-    } else if (clearedCount >= 2) {
+    } else if (clearedCount >= 10) {
       stage = 2;
     } else if (clearedCount >= 1) {
       stage = 1;
@@ -96,25 +117,43 @@ class _DailyScreenState extends State<DailyScreen> {
   }
 
   void _onStartDaily() async {
-    final now = DateTime.now();
-    final prefs = await SharedPreferences.getInstance();
-    final clearedDates = prefs.getStringList('cleared_daily_days') ?? [];
+    if (_selectedDay == null) return;
 
-    // 今日の日付
-    final today = DateTime(now.year, now.month, now.day);
-    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final selectedStr = DateFormat('yyyy-MM-dd').format(_selectedDay!);
 
-    DateTime playDate;
-
-    if (clearedDates.contains(todayStr)) {
-      // 今日がクリア済み → 前日から遡って未クリアの日を探す
-      playDate = _findLatestUnclearedDay(clearedDates, now);
+    if (selectedStr == today) {
+      _navigateToPlay(_selectedDay!);
     } else {
-      // 今日が未クリア → 今日に挑戦
-      playDate = today;
+      if (_isRewardedAdReady && _rewardedAd != null) {
+        _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+          onAdShowedFullScreenContent: (ad) async {
+            await AudioManager.stopBgm(); // ← 広告が始まったら止める
+          },
+          onAdDismissedFullScreenContent: (ad) async{
+            ad.dispose();
+            _loadRewardedAd();
+          },
+          onAdFailedToShowFullScreenContent: (ad, error) async {
+            ad.dispose();
+            _loadRewardedAd();
+          },
+        );
+        _rewardedAd!.show(
+          onUserEarnedReward: (ad, reward) async{
+            await AudioManager.forceRestartBgm();
+            _navigateToPlay(_selectedDay!);
+          },
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('広告の読み込みに失敗しました')),
+        );
+      }
     }
+  }
 
-    // 問題インデックス生成
+  void _navigateToPlay(DateTime playDate) async {
     final baseDate = DateTime(2024, 1, 1);
     final dayDiff = playDate.difference(baseDate).inDays;
     final index = dayDiff % 100;
@@ -129,14 +168,13 @@ class _DailyScreenState extends State<DailyScreen> {
       '/daily-play',
       arguments: {
         'problem': selected,
-        'date': DateFormat('yyyy-MM-dd').format(playDate), // ← OK now
+        'date': DateFormat('yyyy-MM-dd').format(playDate),
       },
     ).then((_) async {
       await _loadClearedDays();
       _determineSelectedDay();
       if (!mounted) return;
       _updateFlowerImage();
-
     });
   }
 
@@ -166,18 +204,9 @@ class _DailyScreenState extends State<DailyScreen> {
     );
   }
 
-  DateTime _findLatestUnclearedDay(List<String> clearedDates, DateTime now) {
-    for (int i = now.day - 1; i >= 1; i--) {
-      final candidate = DateTime(now.year, now.month, i);
-      final candidateStr = DateFormat('yyyy-MM-dd').format(candidate);
-      if (!clearedDates.contains(candidateStr)) {
-        return candidate;
-      }
-    }
-    // すべてクリア済みなら1日を返す
-    return DateTime(now.year, now.month, 1);
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -193,9 +222,6 @@ class _DailyScreenState extends State<DailyScreen> {
               Navigator.pushNamed(context, '/settings');
             },
           ),
-
-
-          // 初期化ボタン
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {
@@ -205,13 +231,10 @@ class _DailyScreenState extends State<DailyScreen> {
                 _clearedDates = {};
                 _selectedDay = null;
               });
-              _determineSelectedDay(); // ← 再選択
-              _updateFlowerImage();    // ← 花の状態も更新
+              _determineSelectedDay();
+              _updateFlowerImage();
             },
           ),
-
-
-
         ],
       ),
       extendBodyBehindAppBar: true,
@@ -237,7 +260,7 @@ class _DailyScreenState extends State<DailyScreen> {
                     formatButtonVisible: false,
                     leftChevronVisible: false,
                     rightChevronVisible: false,
-                    titleCentered: true
+                    titleCentered: true,
                   ),
                   calendarBuilders: CalendarBuilders(
                     defaultBuilder: (context, day, _) => _buildCalendarDay(day, false),
@@ -252,6 +275,37 @@ class _DailyScreenState extends State<DailyScreen> {
                       ? Image.asset(_flowerImage!, fit: BoxFit.contain)
                       : const SizedBox.shrink(),
                 ),
+                // 達成度バー
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: SizedBox(
+                    width: 180,
+                    child: Column(
+                      children: [
+                        Text(
+                          '${_clearedDates.length} / ${_lastDay.day}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                            value: _clearedDates.length / _lastDay.day,
+                            minHeight: 10,
+                            backgroundColor: Colors.white24,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.lightGreenAccent),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _selectedDay != null ? _onStartDaily : null,
@@ -260,7 +314,18 @@ class _DailyScreenState extends State<DailyScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   ),
-                  child: const Text('PLAY', style: TextStyle(fontSize: 20)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedDay != null &&
+                          !_isSameDate(_selectedDay!, DateTime.now()))
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.ondemand_video, size: 30), // 🎥 アイコン
+                        ),
+                      const Text('PLAY', style: TextStyle(fontSize: 20)),
+                    ],
+                  ),
                 ),
               ],
             ),
