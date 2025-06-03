@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/ad_manager.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/utils/progress_manager.dart';
 import 'package:numfit/utils/difficulty_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadClearedStages();
+    _checkFirstLaunch();
   }
 
   Future<void> _loadClearedStages() async {
@@ -32,6 +35,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (mounted) setState(() {});
   }
+  
+  Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenHowToPlay = prefs.getBool('hasSeenHowToPlay') ?? false;
+
+    if (!hasSeenHowToPlay) {
+      await prefs.setBool('hasSeenHowToPlay', true);
+      if (mounted) {
+        Navigator.pushNamed(context, '/how-to-play');
+      }
+    }
+  }
+
 
   @override
   void dispose() {
@@ -291,9 +307,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushNamed(context, '/collection');
               },
               child: Image.asset(
-                'assets/images/leaf.png', // ← 使いたい画像パスに変更
-                width: 60,
-                height: 60,
+                'assets/images/leaf.png',
+                width: 70,
+                height: 70,
+              ),
+            ),
+          ),
+          Positioned(
+            top: kToolbarHeight + 90,
+            left: 30,
+            child: GestureDetector(
+              onTap: () async {
+                await AudioManager.playSe('audio/tap.mp3');
+
+                // ダミーで広告削除フラグをONにする
+                await AdManager.setNoAds(true);
+                
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('広告を削除しました')),
+                );
+              },
+              child: Image.asset(
+                'assets/images/NoAD.png', 
+                width: 70,
+                height: 70,
               ),
             ),
           ),

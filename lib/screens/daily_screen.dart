@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/ad_manager.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,7 +39,11 @@ class _DailyScreenState extends State<DailyScreen> {
       _initializeDailyState();
     });
 
-    _loadRewardedAd();
+    AdManager.isAdsRemoved().then((noAds) {
+      if (!noAds) {
+        _loadRewardedAd();
+      }
+    });
   }
 
   void _loadRewardedAd() {
@@ -122,8 +127,9 @@ class _DailyScreenState extends State<DailyScreen> {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final selectedStr = DateFormat('yyyy-MM-dd').format(_selectedDay!);
 
-    if (selectedStr == today) {
+    if (await AdManager.isAdsRemoved() || selectedStr == today) {
       _navigateToPlay(_selectedDay!);
+      return;
     } else {
       if (_isRewardedAdReady && _rewardedAd != null) {
         _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(

@@ -30,11 +30,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   shared_preferences: ^2.5.3
   audioplayers: 
   carousel_slider:
   table_calendar:
   google_mobile_ads: ^6.0.0
+  in_app_purchase: ^3.2.3
+  url_launcher: ^6.3.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

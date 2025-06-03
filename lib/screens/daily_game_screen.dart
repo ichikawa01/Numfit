@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/ad_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
@@ -31,22 +32,26 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
   void initState() {
     super.initState();
 
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト広告ID
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          setState(() {
-            _isBannerLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          print('Ad failed: $error');
-        },
-      ),
-    )..load();
+    AdManager.isAdsRemoved().then((noAds) {
+      if (!noAds) {
+        _bannerAd = BannerAd(
+          adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト広告ID
+          size: AdSize.banner,
+          request: const AdRequest(),
+          listener: BannerAdListener(
+            onAdLoaded: (_) {
+              setState(() {
+                _isBannerLoaded = true;
+              });
+            },
+            onAdFailedToLoad: (ad, error) {
+              ad.dispose();
+              print('Ad failed: $error');
+            },
+          ),
+        )..load();
+      }
+    });
   }
 
   @override

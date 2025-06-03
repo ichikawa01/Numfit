@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:numfit/utils/audio_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:numfit/utils/progress_manager.dart';
 import 'package:numfit/utils/difficulty_utils.dart';
@@ -71,6 +72,13 @@ class _CollectionScreenState extends State<CollectionScreen> {
         title: const Text('COLLECTION'),
         backgroundColor: Colors.transparent.withAlpha(50),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await AudioManager.playSe('audio/tap.mp3');
+            Navigator.pop(context);
+          },
+        ),
       ),
       extendBodyBehindAppBar: true,
       body: Container(

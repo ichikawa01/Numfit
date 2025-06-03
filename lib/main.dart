@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:numfit/screens/daily_game_screen.dart';
+import 'package:numfit/screens/how_to_play_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/home_screen.dart';
@@ -9,6 +10,7 @@ import 'screens/settings_screen.dart';
 import 'screens/collection_screen.dart';
 import 'screens/daily_screen.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 
 void main() async{
@@ -28,6 +30,25 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+
+      supportedLocales: const [
+        Locale('en'), // 英語
+        Locale('ja'), // 日本語
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        for (final supported in supportedLocales) {
+          if (supported.languageCode == locale?.languageCode) {
+            return supported;
+          }
+        }
+        return supportedLocales.first;
+      },
+
       initialRoute: '/',
       routes: {
       '/': (context) => const HomeScreen(),
@@ -38,6 +59,7 @@ class MyApp extends StatelessWidget {
       '/collection': (context) => const CollectionScreen(),
       '/daily': (context) => const DailyScreen(),
       '/daily-play': (context) => const DailyGameScreen(),
+      '/how-to-play': (context) => const HowToPlayScreen(),
       },
     );
   }

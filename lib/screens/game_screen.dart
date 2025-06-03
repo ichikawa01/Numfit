@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:numfit/utils/ad_manager.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/widgets/hexagon_button.dart';
 import 'package:numfit/utils/progress_manager.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ← カウント保存用
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -22,10 +23,13 @@ class GameScreenState extends State<GameScreen> {
 
   late int correctAnswer;
   late List<String> items;
+  late List<int> solution;
 
   String difficulty = 'EASY';
   int stage = 1;
   bool _initialized = false;
+  bool showHint = false;
+  bool hintUsed = false;
 
 
   // 広告関連
@@ -33,6 +37,9 @@ class GameScreenState extends State<GameScreen> {
   bool _isBannerLoaded = false;
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdReady = false;
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
+
 
   void _loadInterstitialAd() {
     InterstitialAd.load(
@@ -50,31 +57,51 @@ class GameScreenState extends State<GameScreen> {
       ),
     );
   }
-
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/5224354917', // テスト用ID
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('RewardedAd failed to load: $error');
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
 
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト用ID
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          setState(() {
-            _isBannerLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (ad, error) {
-          ad.dispose();
-          _isBannerLoaded = false;
-          print('Ad failed to load: $error');
-        },
-      ),
-    )..load();
 
-    _loadInterstitialAd();
+    AdManager.isAdsRemoved().then((noAds) {
+      if (!noAds) {
+        _bannerAd = BannerAd(
+          adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト用ID
+          size: AdSize.banner,
+          request: const AdRequest(),
+          listener: BannerAdListener(
+            onAdLoaded: (_) {
+              setState(() {
+                _isBannerLoaded = true;
+              });
+            },
+            onAdFailedToLoad: (ad, error) {
+              ad.dispose();
+              _isBannerLoaded = false;
+              print('Ad failed to load: $error');
+            },
+          ),
+        )..load();
+        _loadInterstitialAd();
+        _loadRewardedAd();
+      }
+    });
   }
 
   @override
@@ -91,6 +118,7 @@ class GameScreenState extends State<GameScreen> {
 
     correctAnswer = problem['target'];
     items = List<String>.from(problem['items']);
+    solution = List<int>.from(problem['solution']);
   }
 
   @override
@@ -308,6 +336,57 @@ class GameScreenState extends State<GameScreen> {
               ),
             ),
           ),
+          Positioned(
+            top:330,
+            right: 28,
+            child: GestureDetector(
+              onTap: () async {
+                if (await AdManager.isAdsRemoved()) {
+                  setState(() {
+                    showHint = true;
+                    hintUsed = true;
+                  });
+                  return;
+                }
+                if (hintUsed) return;
+                if (_isRewardedAdReady && _rewardedAd != null) {
+                  _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+                    onAdShowedFullScreenContent: (ad) async {
+                      await AudioManager.stopBgm(); // ← 広告が始まったら止める
+                    },
+                    onAdDismissedFullScreenContent: (ad) {
+                      ad.dispose();
+                      _loadRewardedAd(); // 次を読み込み
+                    },
+                    onAdFailedToShowFullScreenContent: (ad, error) {
+                      ad.dispose();
+                      _loadRewardedAd(); // 次を読み込み
+                    },
+                  );
+
+                  _rewardedAd!.show(
+                    onUserEarnedReward: (AdWithoutView ad, RewardItem reward) async {
+                      await AudioManager.forceRestartBgm();
+                      setState(() {
+                        showHint = true; // ← 報酬としてヒント表示
+                        hintUsed = true; // ヒントを使用済みにする
+                      });
+                    },
+                  );
+                } else {
+                  print('Rewarded ad is not ready yet.');
+                  // Optional: ユーザーに「読み込み中」と通知
+                }
+              },
+              child: Image.asset(
+                hintUsed
+                    ? 'assets/images/used_hint.png'
+                    : 'assets/images/hint.png',
+                width: 80,
+                height: 80,
+              ),
+            ),
+          ),
           if (_isBannerLoaded && _bannerAd != null)
             Positioned(
               bottom: 40,
@@ -320,6 +399,23 @@ class GameScreenState extends State<GameScreen> {
                 child: AdWidget(ad: _bannerAd!),
               ),
             ),
+        if (showHint)
+          Positioned(
+            top: 410,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.yellow.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange, width: 1),
+              ),
+              child: Text(
+                '  Hint ${items[solution[0]]}  ',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
         ],
       ),
     );

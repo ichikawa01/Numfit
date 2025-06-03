@@ -1,6 +1,8 @@
 // lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:numfit/utils/audio_manager.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,9 +14,17 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
+    final lang = Localizations.localeOf(context).languageCode;
+
+    final howToText = lang == 'ja' ? '遊び方' : 'How to Play';
+    final privacyText = lang == 'ja' ? 'プライバシーポリシー' : 'Privacy Policy';
+    final bgmText = lang == 'ja' ? 'BGM' : 'BGM';
+    final seText = lang == 'ja' ? '効果音' : 'Sound Effects';
+    final urlError = lang == 'ja' ? 'URLを開けませんでした' : 'Could not open the URL';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SETTINGS'),
+        title: Text(lang == 'ja' ? '設定' : 'Settings'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -37,14 +47,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .8),
+              color: Colors.white.withOpacity(0.8),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 SwitchListTile(
-                  title: const Text('BGM'),
+                  title: Text(bgmText),
                   value: AudioManager.isBgmEnabled,
                   onChanged: (_) async {
                     await AudioManager.toggleBgm();
@@ -52,11 +62,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('SE'),
+                  title: Text(seText),
                   value: AudioManager.isSeEnabled,
                   onChanged: (_) async {
                     await AudioManager.toggleSe();
                     setState(() {});
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.help_outline),
+                  title: Text(howToText),
+                  onTap: () async {
+                    await AudioManager.playSe('audio/tap.mp3');
+                    Navigator.pushNamed(context, '/how-to-play');
+                  },
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip),
+                  title: Text(privacyText),
+                  onTap: () async {
+                    const url = 'https://github.com/ichikawa01/privacy-policy';
+                    if (await canLaunchUrl(Uri.parse(url))) {
+                      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(urlError)),
+                      );
+                    }
                   },
                 ),
               ],
@@ -66,4 +99,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
 }
