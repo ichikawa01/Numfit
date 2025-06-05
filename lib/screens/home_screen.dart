@@ -25,8 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int currentIndex = 0;
 
   //課金用
-  final InAppPurchase _iap = InAppPurchase.instance;
-  final String _removeAdsId = 'remove_ads';
+  // final InAppPurchase _iap = InAppPurchase.instance;
+  // final String _removeAdsId = 'remove_ads';
 
   @override
   void initState() {
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     for (final purchase in purchases) {
       if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
-        if (purchase.productID == 'remove_ads') {
+        if (purchase.productID == 'remove_ads_numfit') {
           AdManager.setNoAds(true); // ✅ 本番用の保存処理
           if (mounted) {
             setState(() {}); // 状態が変わったことを反映
@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return;
   }
 
-  const String productId = 'remove_ads';
+  const String productId = 'remove_ads_numfit';
   final ProductDetailsResponse response =
       await InAppPurchase.instance.queryProductDetails({productId});
   if (response.notFoundIDs.isNotEmpty) {
