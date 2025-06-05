@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:numfit/utils/ad_manager.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:numfit/utils/progress_manager.dart';
 import 'package:numfit/utils/difficulty_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -21,12 +24,37 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _slideFromRight = true;
   int currentIndex = 0;
 
+  //課金用
+  final InAppPurchase _iap = InAppPurchase.instance;
+  final String _removeAdsId = 'remove_ads';
+
   @override
   void initState() {
     super.initState();
     _loadClearedStages();
     _checkFirstLaunch();
+    initTracking();
+    initAds();
+    _listenToPurchaseUpdates();
+    InAppPurchase.instance.restorePurchases();
   }
+
+  void _listenToPurchaseUpdates() {
+  InAppPurchase.instance.purchaseStream.listen((purchases) {
+    for (final purchase in purchases) {
+      if (purchase.status == PurchaseStatus.purchased ||
+          purchase.status == PurchaseStatus.restored) {
+        if (purchase.productID == 'remove_ads') {
+          AdManager.setNoAds(true); // ✅ 本番用の保存処理
+          if (mounted) {
+            setState(() {}); // 状態が変わったことを反映
+          }
+          InAppPurchase.instance.completePurchase(purchase);
+        }
+      }
+    }
+  });
+}
 
   Future<void> _loadClearedStages() async {
     for (final difficulty in difficulties) {
@@ -47,6 +75,40 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
+
+  Future<void> initTracking() async {
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+    if (status == TrackingStatus.notDetermined) {
+      final result = await AppTrackingTransparency.requestTrackingAuthorization();
+      print('Tracking status: $result');
+    }
+  }
+
+  Future<void> initAds() async {
+    await MobileAds.instance.initialize();
+  }
+
+  Future<void> _buyRemoveAds() async {
+  final bool available = await InAppPurchase.instance.isAvailable();
+  if (!available) {
+    debugPrint('課金サービスが使えません');
+    return;
+  }
+
+  const String productId = 'remove_ads';
+  final ProductDetailsResponse response =
+      await InAppPurchase.instance.queryProductDetails({productId});
+  if (response.notFoundIDs.isNotEmpty) {
+    debugPrint('商品が見つかりません: $productId');
+    return;
+  }
+
+  final ProductDetails productDetails = response.productDetails.first;
+  final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
+
+  InAppPurchase.instance.buyNonConsumable(purchaseParam: purchaseParam);
+}
+
 
 
   @override
@@ -320,8 +382,19 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () async {
                 await AudioManager.playSe('audio/tap.mp3');
 
-                // ダミーで広告削除フラグをONにする
-                await AdManager.setNoAds(true);
+                final alreadyRemoved = await AdManager.isAdsRemoved();
+                if (alreadyRemoved) {
+                  await InAppPurchase.instance.restorePurchases();
+                  // ✅ 既に購入済み（削除済み）
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('既に広告は削除されています')),
+                  );
+                  return;
+                }
+
+                // 広告削除フラグをONにする
+                await _buyRemoveAds();
                 
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(

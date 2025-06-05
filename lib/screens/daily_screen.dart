@@ -48,7 +48,7 @@ class _DailyScreenState extends State<DailyScreen> {
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/5224354917',
+      adUnitId: 'ca-app-pub-7316649907762779/2445934972',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
@@ -221,6 +221,13 @@ class _DailyScreenState extends State<DailyScreen> {
         title: const Text('DAILY'),
         backgroundColor: Colors.transparent.withAlpha(50),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () async {
+            await AudioManager.playSe('audio/tap.mp3');
+            Navigator.pop(context);
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.menu),
@@ -228,19 +235,19 @@ class _DailyScreenState extends State<DailyScreen> {
               Navigator.pushNamed(context, '/settings');
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('cleared_daily_days');
-              setState(() {
-                _clearedDates = {};
-                _selectedDay = null;
-              });
-              _determineSelectedDay();
-              _updateFlowerImage();
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.delete),
+          //   onPressed: () async {
+          //     final prefs = await SharedPreferences.getInstance();
+          //     await prefs.remove('cleared_daily_days');
+          //     setState(() {
+          //       _clearedDates = {};
+          //       _selectedDay = null;
+          //     });
+          //     _determineSelectedDay();
+          //     _updateFlowerImage();
+          //   },
+          // ),
         ],
       ),
       extendBodyBehindAppBar: true,

@@ -43,7 +43,7 @@ class GameScreenState extends State<GameScreen> {
 
   void _loadInterstitialAd() {
     InterstitialAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/4411468910', // テスト用 ID（本番では置換）
+      adUnitId: 'ca-app-pub-7316649907762779/5213351508',
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
@@ -59,7 +59,7 @@ class GameScreenState extends State<GameScreen> {
   }
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/5224354917', // テスト用ID
+      adUnitId: 'ca-app-pub-7316649907762779/2445934972', 
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
@@ -82,7 +82,7 @@ class GameScreenState extends State<GameScreen> {
     AdManager.isAdsRemoved().then((noAds) {
       if (!noAds) {
         _bannerAd = BannerAd(
-          adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト用ID
+          adUnitId: 'ca-app-pub-7316649907762779/3779197946',
           size: AdSize.banner,
           request: const AdRequest(),
           listener: BannerAdListener(
@@ -108,6 +108,8 @@ class GameScreenState extends State<GameScreen> {
   void dispose() {
     _bannerAd?.dispose();
     super.dispose();
+    _interstitialAd?.dispose();
+    _rewardedAd?.dispose();
   }
 
   Future<void> _loadProblem() async {
@@ -311,7 +313,7 @@ class GameScreenState extends State<GameScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: .8),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [
                         BoxShadow(

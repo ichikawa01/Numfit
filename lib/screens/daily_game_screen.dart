@@ -22,11 +22,35 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
 
   late int correctAnswer;
   late List<String> items;
-  bool _initialized = false;
+  late List<int> solution;
   late String playDateStr;
+
+  bool _initialized = false;
+  bool showHint = false;
+  bool hintUsed = false;
+
 
   BannerAd? _bannerAd;
   bool _isBannerLoaded = false;
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
+
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-7316649907762779/2445934972',
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('RewardedAd failed to load: $error');
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -35,7 +59,7 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
     AdManager.isAdsRemoved().then((noAds) {
       if (!noAds) {
         _bannerAd = BannerAd(
-          adUnitId: 'ca-app-pub-3940256099942544/2934735716', // テスト広告ID
+          adUnitId: 'ca-app-pub-7316649907762779/3779197946',
           size: AdSize.banner,
           request: const AdRequest(),
           listener: BannerAdListener(
@@ -50,6 +74,7 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
             },
           ),
         )..load();
+        _loadRewardedAd();
       }
     });
   }
@@ -58,6 +83,7 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
   void dispose() {
     _bannerAd?.dispose();
     super.dispose();
+    _rewardedAd?.dispose();
   }
 
   @override
@@ -83,6 +109,7 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
     final problem = data[index % data.length];
     correctAnswer = problem['target'];
     items = List<String>.from(problem['items']);
+    solution = List<int>.from(problem['solution']);
   }
 
   void _handleButtonPress(int index) async {
@@ -244,6 +271,57 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
               ),
             ),
           ),
+          Positioned(
+            top:330,
+            right: 28,
+            child: GestureDetector(
+              onTap: () async {
+                if (await AdManager.isAdsRemoved()) {
+                  setState(() {
+                    showHint = true;
+                    hintUsed = true;
+                  });
+                  return;
+                }
+                if (hintUsed) return;
+                if (_isRewardedAdReady && _rewardedAd != null) {
+                  _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+                    onAdShowedFullScreenContent: (ad) async {
+                      await AudioManager.stopBgm(); // ← 広告が始まったら止める
+                    },
+                    onAdDismissedFullScreenContent: (ad) {
+                      ad.dispose();
+                      _loadRewardedAd(); // 次を読み込み
+                    },
+                    onAdFailedToShowFullScreenContent: (ad, error) {
+                      ad.dispose();
+                      _loadRewardedAd(); // 次を読み込み
+                    },
+                  );
+
+                  _rewardedAd!.show(
+                    onUserEarnedReward: (AdWithoutView ad, RewardItem reward) async {
+                      await AudioManager.forceRestartBgm();
+                      setState(() {
+                        showHint = true; // ← 報酬としてヒント表示
+                        hintUsed = true; // ヒントを使用済みにする
+                      });
+                    },
+                  );
+                } else {
+                  print('Rewarded ad is not ready yet.');
+                  // Optional: ユーザーに「読み込み中」と通知
+                }
+              },
+              child: Image.asset(
+                hintUsed
+                    ? 'assets/images/used_hint.png'
+                    : 'assets/images/hint.png',
+                width: 80,
+                height: 80,
+              ),
+            ),
+          ),
           if (_isBannerLoaded && _bannerAd != null)
             Positioned(
               bottom: 40,
@@ -256,6 +334,23 @@ class _DailyGameScreenState extends State<DailyGameScreen> {
                 child: AdWidget(ad: _bannerAd!),
               ),
             ),
+          if (showHint)
+            Positioned(
+            top: 410,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.yellow.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange, width: 1),
+              ),
+              child: Text(
+                '  Hint ${items[solution[0]]}  ',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
         ],
       ),
     );
