@@ -1,8 +1,7 @@
-// lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:numfit/utils/audio_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,6 +17,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final howToText = lang == 'ja' ? '遊び方' : 'How to Play';
     final privacyText = lang == 'ja' ? 'プライバシーポリシー' : 'Privacy Policy';
+    final restoreText = lang == 'ja' ? '購入を復元' : 'Restore Purchases';
+    final restoreDone = lang == 'ja' ? '購入履歴を復元しました' : 'Purchases restored.';
     final bgmText = lang == 'ja' ? 'BGM' : 'BGM';
     final seText = lang == 'ja' ? '効果音' : 'Sound Effects';
     final urlError = lang == 'ja' ? 'URLを開けませんでした' : 'Could not open the URL';
@@ -77,6 +78,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Navigator.pushNamed(context, '/how-to-play');
                   },
                 ),
+                ListTile(
+                  leading: const Icon(Icons.restore),
+                  title: Text(restoreText),
+                  onTap: () async {
+                    await AudioManager.playSe('audio/tap.mp3');
+                    await InAppPurchase.instance.restorePurchases();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(restoreDone)),
+                    );
+                  },
+                ),
                 const SizedBox(height: 16),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip),
@@ -99,5 +112,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
 }
